@@ -41,16 +41,6 @@ class loadSongs():
     
 target, source = loadSongs().load_songs()
 
-# X threads in a block; all blocks combined should make up the length of the search song
-# so one thread in a block must compare upto X entries
-
-# @cuda.jit
-# def compute_norm(A, norm):
-
-#     size = cuda.grid(1)
-#     if size < len(A):
-#         norm[size] = A[size]*A[size]
-
 threadsperblock = 128
 
 @cuda.jit
@@ -68,44 +58,6 @@ def dot_prod_kernel(A, B, dot_prod, norm_A, norm_B):
         dot_prod[size] = A[size] * B[size]
         norm_A[size] = A[size] * A[size]
         norm_B[size] = B[size] * B[size]
-
-# @cuda.jit
-# def parallel_reduce(dot_prod, norm_A, norm_B):
-#     """
-#     dot_prod = vector of element-wise product of A and B
-#     norm_A = vector of element-wise squares of A 
-#     norm_B = vector of element-wise squares of B
-
-#     The function will write the sum of each vector to their 0th index 
-#     using parallel reduction.
-#     """
-
-#     sdot_prod = cuda.shared.array(shape = (threadsperblock,), dtype = numba.float64)
-#     snorm_A = cuda.shared.array(shape = (threadsperblock,), dtype = numba.float64)
-#     snorm_B = cuda.shared.array(shape = (threadsperblock,), dtype = numba.float64)
-
-#     tid = cuda.grid(1)
-
-#     sdot_prod[tid] = dot_prod[tid]
-#     snorm_A[tid] = norm_A[tid]
-#     snorm_B[tid] = norm_B[tid]
-
-#     cuda.syncthreads()
-
-#     s = cuda.blockDim.x/2
-#     while s > 0:
-#         if tid < s:
-#             sdot_prod[tid] += sdot_prod[tid + s]
-#             snorm_A[tid] += sdot_prod[tid + s]
-#             snorm_B[tid] += snorm_B[tid + s]
-#         cuda.syncthreads()
-
-#         s >>= 1
-    
-#     if tid == 0:
-#         dot_prod[cuda.blockIdx.x] = sdot_prod[0]
-#         snorm_A[cuda.blockIdx.x] = snorm_A[0]
-#         snorm_B[cuda.blockIdx.x] = snorm_B[0]
 
 
 @cuda.reduce
@@ -149,7 +101,9 @@ def find_songs(source, target):
                 
                 if similarity > 0.01:
                     offset = i/target_rate 
-                    match_file.write("{0} , {1} , {2:5.2f}, {3:5.2f} \n".format(song[0], another_song[0], offset, compare/target_rate))
+                    match_file.write("{0} , {1} , {2:5.2f}, {3:5.2f} \n".format(song[0], 
+                                            another_song[0], offset, compare/target_rate))
+
                     print("{} MATCHED WITH {}".format(song[0], another_song[0]))
                     break
     
@@ -158,41 +112,3 @@ def find_songs(source, target):
 
 find_songs(source, target)
  
-# dummy = np.array([1, 2, 3, 4, 5])
-# dummy1 = np.array([4, 5, 6, 7, 8])
-# dummy2 = np.array([1, 1, 1, 1, 1])
-# dummy_glob = cuda.to_device(dummy)
-# dummy1_glob = cuda.to_device(dummy1)
-# dummy2_glob = cuda.to_device(dummy2)
-
-# dot = sum_reduce(dummy_glob)
-# norm = sum_reduce(dummy1_glob)
-# norm1 = sum_reduce(dummy2_glob)
-
-# print("DOT: {}".format(dot))
-# print("NORM_A: {}".format(norm))
-# print("NORM_B: {}".format(norm1))
-# dot = cuda.device_array((5,))
-# norm_A = cuda.device_array((5,))
-# norm_B = cuda.device_array((5,))
-
-#dot_prod_kernel[1, 16](dummy_glob, dummy1_glob, dot, norm_A, norm_B)
-# dot = dot.copy_to_host()
-# norm_A = norm_A.copy_to_host()
-# norm_B = norm_B.copy_to_host()
-# dot_p = cuda.to_device(dot)
-# norm_Ap = cuda.to_device(norm_A)
-# norm_Bp = cuda.to_device(norm_B)
-#parallel_reduce[1, 16](dummy_glob, dummy1_glob, dummy2_glob)
-#print(sum_reduce(dummy2_glob))
-#compute_norm[1, 16](dummy, norm_A)
-#compute_norm[1, 16](dummy2, norm_B)
-# print(dot)
-# print("DOT: {}".format(dot.copy_to_host()))
-# print("NORM_A: {}".format(norm_A.copy_to_host()))
-# print("NORM_B: {}".format(norm_B.copy_to_host()))
-# print(norm([1,2,3,4,5]))
-# print(norm([4,5,6,7,8]))
-
-# print(target[0][1][0][1653750:1653800])
-# print(source[1][1][0][:50])
