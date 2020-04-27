@@ -1,13 +1,9 @@
 import librosa
 import os
-import math
 import os.path
+import math
 import numpy as np
-from numpy.linalg import norm
-#import numba
-#from numba import jit, cuda 
 from tqdm import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
 import warnings
 
 with warnings.catch_warnings():
@@ -39,9 +35,6 @@ class loadSongs():
         print("Done.")
         return self.data_dict["target_data.npy"][1], self.data_dict["source_data.npy"][1]
     
-target, source = loadSongs().load_songs()
-
-threadsperblock = 128
 
 @cuda.jit
 def dot_prod_kernel(A, B, dot_prod, norm_A, norm_B):
@@ -67,6 +60,7 @@ def sum_reduce(a, b):
 def find_songs(source, target):
     
     match_file = open("Matches.txt", "w")
+    threadsperblock = 128
 
     for song in target:
         
@@ -87,7 +81,7 @@ def find_songs(source, target):
 
             print("Matching {} with {}".format(song[0], another_song[0]))
             
-            for i in tqdm(range(0, len(target_freq), math.ceil(target_rate))):
+            for i in tqdm(range(0, len(target_freq), math.ceil(target_rate/5))):
                 target_glob = cuda.to_device(target_freq[i : i + compare])
                 source_glob = cuda.to_device(source_freq[:compare])
 
@@ -99,7 +93,7 @@ def find_songs(source, target):
 
                 similarity = dot/math.sqrt(normA * normB)
                 
-                if similarity > 0.01:
+                if similarity > 0.05:
                     offset = i/target_rate 
                     match_file.write("{0} , {1} , {2:5.2f}, {3:5.2f} \n".format(song[0], 
                                             another_song[0], offset, compare/target_rate))
@@ -109,6 +103,6 @@ def find_songs(source, target):
     
     match_file.close()
 
-
+target, source = loadSongs().load_songs()
 find_songs(source, target)
  
