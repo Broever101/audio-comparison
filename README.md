@@ -6,13 +6,14 @@ https://docs.anaconda.com/anaconda/install/windows/
 Next, open Anaconda and go to the Environments tab. In the base (root) environment, open terminal.
 ![Base Terminal](/Screenshot_320.png)
 
-Type the following commands:
+Type the following commands:  
+```
 conda install numba  
 conda install cudatoolkit  
 pip install numpy  
 pip install librosa  
 pip install tqdm  
-
+```
 
 Now all the libraries are set up. In the directory where you put the ```tests.py``` file, create two folders: ```"source" and "target". ```  
 Copy the files in KAREN folder in "source", or alternatively just copy the Karen folder and rename it to "source". 
